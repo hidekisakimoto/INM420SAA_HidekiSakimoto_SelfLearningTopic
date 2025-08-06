@@ -1,20 +1,27 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
-import { useScroll } from '@react-three/drei'
+import { useScroll, Bounds } from '@react-three/drei'
 import { Model } from './Model'
 
 export default function ZiggsScroll() {
   const ref = useRef()
-  const scroll = useScroll()   // gives scroll data 0 → 1
+  const scroll = useScroll()
 
   useFrame(() => {
-    // Simple spin based on scroll position
-    if (ref.current) {
-      const r = scroll.offset * Math.PI * 2   // full turn by bottom
-      ref.current.rotation.y = r
-      ref.current.rotation.x = r * 0.25       // slight tilt for fun
-    }
+    if (!ref.current) return
+    const spinIn = scroll.range(0, 0.25)
+    ref.current.rotation.y = spinIn * Math.PI * 2
+
+    const hop = scroll.curve(0.25, 0.5)
+    ref.current.position.y = hop * 0.5
+
+    const zoom = scroll.range(0.5, 1)
+    ref.current.scale.setScalar(1 + zoom * 0.5)
   })
 
-  return <Model ref={ref} scale={1.5} />
+  return (
+    <Bounds fit clip observe margin={1.2}>
+      <Model ref={ref} />
+    </Bounds>
+  )
 }

@@ -3,23 +3,36 @@ import { Canvas } from '@react-three/fiber'
 import { ScrollControls } from '@react-three/drei'
 import { Suspense } from 'react'
 import ZiggsScroll from './ZiggsScroll'
+import { Bounds } from '@react-three/drei'
 
 export default function App() {
   const reduced = useReducedMotion()
 
   return (
     <>
-      <header style={{ height: '100vh', width: '100%', position: 'relative' }}>
+      <header
+        style={{
+          height: '100vh',
+          width: '100%',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         {reduced ? (
           <img
-            src="/ziggs.png"
+            src="/public/ziggs.png"
             alt="Ziggs static"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         ) : (
-          <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
+          <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
+            {<color attach="background" args={['#ffffff']} />}
+
             <ambientLight intensity={0.8} />
             <directionalLight position={[5, 5, 5]} />
+
             <Suspense fallback={null}>
               <ScrollControls pages={2} damping={4}>
                 <ZiggsScroll />
@@ -29,7 +42,7 @@ export default function App() {
         )}
       </header>
 
-      <section style={{ padding: '4rem', maxWidth: 800 }}>
+      <section style={{ height: '150vh', padding: '4rem', maxWidth: 800 }}>
         <h2>Scroll more</h2>
         <p>
           Just filler text so the page is long enough. Replace this with real stuff later.
