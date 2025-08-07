@@ -1,95 +1,73 @@
 import { useReducedMotion } from './useReducedMotion'
 import { Canvas } from '@react-three/fiber'
-import { ScrollControls, Environment } from '@react-three/drei'
+import { ScrollControls, Scroll, Environment } from '@react-three/drei'
 import { Suspense } from 'react'
 import ZiggsScroll from './ZiggsScroll'
 
 export default function App() {
   const reduced = useReducedMotion()
 
+  /* reduced-motion fallback */
+  if (reduced) {
+    return (
+      <img
+        src="/ziggs.png"
+        alt="Ziggs static"
+        style={{ width: '100%', height: '100vh', objectFit: 'contain' }}
+      />
+    )
+  }
+
+  /* full interactive version */
   return (
     <>
-      <header
-        style={{
-          height: '100vh',
-          width: '100%',
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+      {/*  Full-screen Canvas sits behind the HTML  */}
+      <Canvas
+        camera={{ position: [0, 0, 6], fov: 45 }}
+        style={{ position: 'absolute', inset: 0, zIndex: -1 }}
       >
-        {reduced ? (
-          <img
-            src="/ziggs.png"
-            alt="Ziggs static"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
-        ) : (
-          <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
-            <color attach="background" args={['#ffffff']} />
+        <color attach="background" args={['#1e1e1e']} />
 
-            {/* fill light */}
-            <ambientLight intensity={1.2} />
+        <ambientLight intensity={1} />
+        <directionalLight position={[5, 5, 5]} intensity={10} />
+        <Environment preset="city" environmentIntensity={1} />
 
-            {/* keep the directional for a touch of shading */}
-            <directionalLight position={[5, 5, 5]} intensity={20} />
+        <Suspense fallback={null}>
+          {/* 3 Drei-pages ≈ 300 vh of scroll distance */}
+          <ScrollControls pages={3} damping={4} >
+            <ZiggsScroll />
 
-            {/* NEW: image-based lighting */}
-            <Environment preset="city" />
+            {/*  Scroll-linked DOM overlay  */}
+            <Scroll html>
+              <section
+                style={{
+                  height: '300vh',
+                  color: '#fff',
+                  padding: '20vh 10vw',
+                }}
+              >
+                <h1 style={{ fontSize: '4rem', margin: 0 }}>Meet Ziggs</h1>
 
-            <Suspense fallback={null}>
-              <ScrollControls pages={2} damping={4}>
-                <ZiggsScroll />
-              </ScrollControls>
-            </Suspense>
-          </Canvas>
-        )}
-      </header>
+                <p style={{ maxWidth: 600 }}>
+                  Ziggs is a yordle with a love for big explosions. Scroll to learn
+                  how he went from a lonely inventor to Piltover’s most notorious
+                  demolitions expert.
+                </p>
 
-      <section style={{ height: '150vh', padding: '4rem', maxWidth: 800 }}>
-        <h2>Scroll more</h2>
-        <p>
-          Just filler text so the page is long enough. Replace this with real stuff later.
-        </p>
-      </section>
+                <h2 style={{ marginTop: '120vh' }}>The Spark</h2>
+                <p style={{ maxWidth: 600 }}>
+                  One late night in his workshop, Ziggs perfected the Hexplosive Charge…
+                </p>
+
+                <h2 style={{ marginTop: '220vh' }}>Going Pro</h2>
+                <p style={{ maxWidth: 600 }}>
+                  Armed with his new bombs he teamed up with Heimerdinger to defend the Academy…
+                </p>
+              </section>
+            </Scroll>
+          </ScrollControls>
+        </Suspense>
+      </Canvas>
     </>
   )
 }
-
-
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   return (
-//     <>
-//       <div>
-//         <a href="https://vite.dev" target="_blank">
-//           <img src={viteLogo} className="logo" alt="Vite logo" />
-//         </a>
-//         <a href="https://react.dev" target="_blank">
-//           <img src={reactLogo} className="logo react" alt="React logo" />
-//         </a>
-//       </div>
-//       <h1>Vite + React</h1>
-//       <div className="card">
-//         <button onClick={() => setCount((count) => count + 1)}>
-//           count is {count}
-//         </button>
-//         <p>
-//           Edit <code>src/App.jsx</code> and save to test HMR
-//         </p>
-//       </div>
-//       <p className="read-the-docs">
-//         Click on the Vite and React logos to learn more
-//       </p>
-//     </>
-//   )
-// }
-
-// export default App
