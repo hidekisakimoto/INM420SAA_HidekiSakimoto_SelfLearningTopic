@@ -1,9 +1,8 @@
 import { useReducedMotion } from './useReducedMotion'
 import { Canvas } from '@react-three/fiber'
-import { ScrollControls } from '@react-three/drei'
+import { ScrollControls, Environment } from '@react-three/drei'
 import { Suspense } from 'react'
 import ZiggsScroll from './ZiggsScroll'
-import { Bounds } from '@react-three/drei'
 
 export default function App() {
   const reduced = useReducedMotion()
@@ -22,16 +21,22 @@ export default function App() {
       >
         {reduced ? (
           <img
-            src="/public/ziggs.png"
+            src="/ziggs.png"
             alt="Ziggs static"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         ) : (
           <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
-            {<color attach="background" args={['#ffffff']} />}
+            <color attach="background" args={['#ffffff']} />
 
-            <ambientLight intensity={0.8} />
-            <directionalLight position={[5, 5, 5]} />
+            {/* fill light */}
+            <ambientLight intensity={1.2} />
+
+            {/* keep the directional for a touch of shading */}
+            <directionalLight position={[5, 5, 5]} intensity={20} />
+
+            {/* NEW: image-based lighting */}
+            <Environment preset="city" />
 
             <Suspense fallback={null}>
               <ScrollControls pages={2} damping={4}>
@@ -51,6 +56,7 @@ export default function App() {
     </>
   )
 }
+
 
 // import { useState } from 'react'
 // import reactLogo from './assets/react.svg'
