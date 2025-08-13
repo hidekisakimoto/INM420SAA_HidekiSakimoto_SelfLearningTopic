@@ -6,41 +6,57 @@ function useReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-// Create Ziggs 3D model - now supports both GLB loading and fallback
+// Create Ziggs 3D model with proper GLB loading
 async function createZiggsModel() {
   const group = new THREE.Group()
   
   try {
-    // Import GLTFLoader dynamically
-    const { GLTFLoader } = await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js')
+    // Import GLTFLoader from CDN for r128
+    const GLTFLoaderModule = await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js')
+    const GLTFLoader = GLTFLoaderModule.GLTFLoader
     
     const loader = new GLTFLoader()
     
     // Load the GLB file
+    console.log('🔄 Attempting to load Ziggs GLB model...')
     const gltf = await new Promise((resolve, reject) => {
       loader.load(
         '/ziggs.glb', // Make sure this file is in your public folder
-        (gltf) => resolve(gltf),
-        (progress) => console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%'),
-        (error) => reject(error)
+        (gltf) => {
+          console.log('✅ GLB file loaded successfully:', gltf)
+          resolve(gltf)
+        },
+        (progress) => {
+          const percent = (progress.loaded / progress.total * 100).toFixed(1)
+          console.log(`📥 Loading progress: ${percent}%`)
+        },
+        (error) => {
+          console.error('❌ Error loading GLB file:', error)
+          reject(error)
+        }
       )
     })
     
     // Get the model from the loaded GLTF
     const model = gltf.scene
     
-    // Optional: Apply transformations to match your original Model.jsx settings
+    // Apply the same transformations as your Model.jsx
     model.position.set(-0.021, -0.01, 0)
     model.rotation.set(-Math.PI / 2, 0.044, 0)
     
-    // Optional: Scale the model if needed
+    // Scale the model appropriately
     model.scale.set(1, 1, 1)
     
-    // Enable shadows if your model should cast/receive them
+    // Enable shadows and optimize materials
     model.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true
         child.receiveShadow = true
+        
+        // Ensure materials are properly configured
+        if (child.material) {
+          child.material.needsUpdate = true
+        }
       }
     })
     
@@ -49,7 +65,8 @@ async function createZiggsModel() {
     return group
     
   } catch (error) {
-    console.warn('⚠️ Failed to load Ziggs GLB model, using fallback:', error)
+    console.warn('⚠️ Failed to load Ziggs GLB model, using fallback:', error.message)
+    console.error('Full error details:', error)
     
     // Fallback: Create simple geometric model if GLB fails to load
     // Body
@@ -129,7 +146,7 @@ export default function App() {
     camera.position.set(0, 0, 6)
     cameraRef.current = camera
 
-    // Renderer setup with better performance
+    // Renderer setup
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
       alpha: false,
@@ -137,51 +154,41 @@ export default function App() {
     })
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.shadowMap.enabled = false // Disable shadows for better performance
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
     renderer.outputColorSpace = THREE.SRGBColorSpace
     rendererRef.current = renderer
 
     mountRef.current.appendChild(renderer.domElement)
 
-    // Optimized lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8)
+    // Enhanced lighting for better model visibility
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6)
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2)
     directionalLight.position.set(5, 5, 5)
+    directionalLight.castShadow = true
+    directionalLight.shadow.mapSize.width = 1024
+    directionalLight.shadow.mapSize.height = 1024
     scene.add(directionalLight)
 
-    // Create and add Ziggs model (now async)
+    const pointLight = new THREE.PointLight(0xffffff, 0.8, 100)
+    pointLight.position.set(-5, 5, 5)
+    scene.add(pointLight)
+
+    // Create and add Ziggs model
+    let modelLoaded = false
     createZiggsModel().then(ziggsModel => {
-      ziggsModelRef.current = ziggsModel
-      scene.add(ziggsModel)
-      setIsModelLoaded(true)
-      console.log('Model added to scene')
+      if (!modelLoaded) {
+        ziggsModelRef.current = ziggsModel
+        scene.add(ziggsModel)
+        setIsModelLoaded(true)
+        modelLoaded = true
+        console.log('Model added to scene')
+      }
     }).catch(error => {
       console.error('Failed to create Ziggs model:', error)
     })
-
-    // Optimized animation loop
-    const animate = () => {
-      animationFrameRef.current = requestAnimationFrame(animate)
-
-      if (ziggsModelRef.current && isModelLoaded) {
-        // Rotate based on scroll (slower rotation for smoother performance)
-        ziggsModelRef.current.rotation.y = scrollProgress * Math.PI * 2
-
-        // Add vertical movement
-        const hop = Math.sin(scrollProgress * Math.PI * 2) * 0.2
-        ziggsModelRef.current.position.y = hop
-
-        // Scale effect (less dramatic for better performance)
-        const scale = 1 + Math.sin(scrollProgress * Math.PI) * 0.1
-        ziggsModelRef.current.scale.set(scale, scale, scale)
-      }
-
-      renderer.render(scene, camera)
-    }
-
-    animate()
 
     // Handle window resize
     const handleResize = () => {
@@ -196,11 +203,12 @@ export default function App() {
 
     // Cleanup
     return () => {
+      modelLoaded = false
       window.removeEventListener('resize', handleResize)
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
-      if (mountRef.current && renderer.domElement) {
+      if (mountRef.current && renderer.domElement && mountRef.current.contains(renderer.domElement)) {
         mountRef.current.removeChild(renderer.domElement)
       }
       renderer.dispose()
@@ -217,9 +225,45 @@ export default function App() {
         }
       })
     }
-  }, [reduced, isModelLoaded]) // Remove scrollProgress from dependencies to prevent re-render
+  }, [reduced])
 
-  // Handle scroll with throttling for better performance
+  // Animation loop - separate effect to avoid recreation
+  useEffect(() => {
+    if (reduced || !isModelLoaded) return
+
+    const animate = () => {
+      animationFrameRef.current = requestAnimationFrame(animate)
+
+      if (ziggsModelRef.current && rendererRef.current && cameraRef.current && sceneRef.current) {
+        // Rotate based on scroll
+        ziggsModelRef.current.rotation.y = scrollProgress * Math.PI * 4 // More rotation for better effect
+
+        // Add vertical movement (bobbing)
+        const hop = Math.sin(scrollProgress * Math.PI * 6) * 0.3
+        ziggsModelRef.current.position.y = hop - 0.01 // Offset by original Y position
+
+        // Scale effect
+        const scale = 1 + Math.sin(scrollProgress * Math.PI * 2) * 0.15
+        ziggsModelRef.current.scale.set(scale, scale, scale)
+
+        // Optional: Add some swaying motion
+        const sway = Math.sin(scrollProgress * Math.PI * 3) * 0.1
+        ziggsModelRef.current.rotation.z = sway + 0.044 // Offset by original Z rotation
+
+        rendererRef.current.render(sceneRef.current, cameraRef.current)
+      }
+    }
+
+    animate()
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [isModelLoaded, scrollProgress, reduced])
+
+  // Handle scroll with throttling
   useEffect(() => {
     let ticking = false
     
@@ -266,7 +310,7 @@ export default function App() {
       position: 'relative',
       width: '100%',
       minHeight: '300vh',
-      backgroundColor: '#1e1e1e' // Ensure background color
+      backgroundColor: '#1e1e1e'
     }}>
       {/* Fixed Three.js canvas */}
       <div 
@@ -277,9 +321,9 @@ export default function App() {
           left: 0,
           width: '100%',
           height: '100%',
-          zIndex: 0, // Changed from -1 to 0
+          zIndex: 0,
           pointerEvents: 'none',
-          backgroundColor: '#1e1e1e' // Fallback background
+          backgroundColor: '#1e1e1e'
         }}
       />
       
@@ -292,7 +336,7 @@ export default function App() {
         color: '#fff',
         fontFamily: 'system-ui, sans-serif',
         pointerEvents: 'auto',
-        background: 'transparent' // Make content background transparent
+        background: 'transparent'
       }}>
         {/* Section 1 */}
         <section style={{
@@ -395,7 +439,7 @@ export default function App() {
           </p>
         </section>
 
-        {/* Debug scroll progress */}
+        {/* Debug info */}
         <div style={{
           position: 'fixed',
           top: '20px',
@@ -408,7 +452,8 @@ export default function App() {
           zIndex: 10,
           border: '1px solid rgba(255,255,255,0.2)'
         }}>
-          Scroll: {Math.round(scrollProgress * 100)}%
+          <div>Scroll: {Math.round(scrollProgress * 100)}%</div>
+          <div>Model: {isModelLoaded ? '✅ Loaded' : '⏳ Loading...'}</div>
         </div>
       </div>
     </div>
