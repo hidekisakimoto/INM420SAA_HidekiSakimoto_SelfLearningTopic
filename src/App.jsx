@@ -91,8 +91,8 @@ function AnimatedModel() {
   })
 
   return (
-    <group ref={modelRef}>
-      <Model scale={[1.5, 1.5, 1.5]} />
+    <group ref={modelRef} position={[1.5, 0, 0]} >
+      <Model scale={[0.8, 0.8, 0.8]} />
     </group>
   )
 }
@@ -174,7 +174,7 @@ export default function App() {
             <ambientLight intensity={0.4} />
             <directionalLight 
               position={[5, 5, 5]} 
-              intensity={1}
+              intensity={10}
               castShadow
             />
             <pointLight position={[-5, 5, 5]} intensity={0.5} />
