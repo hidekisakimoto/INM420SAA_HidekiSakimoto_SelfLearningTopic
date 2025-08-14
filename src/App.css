@@ -1,42 +1,123 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: #1e1e1e;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  text-align: left;
 }
 
+.app-container {
+  position: relative;
+  width: 100%;
+  background: #1e1e1e;
+}
+
+.scroll-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 300vh; /* 3 pages worth of scrolling */
+  color: white;
+  pointer-events: auto;
+}
+
+.section {
+  height: 100vh;
+  padding: 20vh 10vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.section h1 {
+  font-size: clamp(2rem, 8vw, 4rem);
+  margin-bottom: 2rem;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.section h2 {
+  font-size: clamp(1.5rem, 6vw, 3rem);
+  margin-bottom: 2rem;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+  font-weight: bold;
+}
+
+.section p {
+  max-width: 600px;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  line-height: 1.6;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+  opacity: 0.95;
+  color: #ffffff;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .section {
+    padding: 15vh 5vw;
+  }
+  
+  .section h1 {
+    font-size: clamp(1.8rem, 10vw, 3rem);
+  }
+  
+  .section h2 {
+    font-size: clamp(1.3rem, 8vw, 2.5rem);
+  }
+  
+  .section p {
+    font-size: clamp(0.9rem, 4vw, 1.1rem);
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for cleaner look (optional) */
+body::-webkit-scrollbar {
+  width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Remove default Vite styles */
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+  display: none;
 }
 
 .card {
-  padding: 2em;
+  display: none;
 }
 
 .read-the-docs {
-  color: #888;
+  display: none;
 }
